@@ -1,7 +1,7 @@
 """Локальная озвучка русского текста нейромоделью Silero v4 (без отправки текста в сеть).
 
 Установка (один раз):
-    pip install torch numpy
+    pip install torch numpy omegaconf
     # нужен ffmpeg в PATH для сборки mp3
 
 Запуск:
