@@ -1,7 +1,7 @@
 name: Озвучка (Silero)
 
 # Запуск с телефона: GitHub → Actions → «Озвучка (Silero)» → Run workflow.
-# Текст берётся из файла репозитория, готовый mp3 — в Artifacts запуска.
+# Текст берётся из файла репозитория, готовый mp3 — в Artifacts запуска и в ветке voice-output (outputs/).
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         default: xenia
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   voice:
@@ -37,3 +37,14 @@ jobs:
         with:
           name: voice
           path: voice.mp3
+      - name: Save mp3 to voice-output branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin voice-output || true
+          git checkout -B voice-output "$(git rev-parse --verify -q origin/voice-output || echo HEAD)"
+          mkdir -p outputs
+          cp voice.mp3 "outputs/voice-${GITHUB_RUN_NUMBER}.mp3"
+          git add outputs
+          git commit -m "Voice output run ${GITHUB_RUN_NUMBER}"
+          git push origin voice-output
