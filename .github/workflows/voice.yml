@@ -9,8 +9,14 @@ on:
         description: Путь к .txt в репозитории
         default: sample_text_ru.txt
       speaker:
-        description: Голос (xenia, baya, aidar, eugene)
+        description: Голос (xenia, baya, aidar, eugene) или несколько через запятую
         default: xenia
+      rate:
+        description: Темп (x-slow, slow, medium, fast)
+        default: slow
+      pause:
+        description: Пауза между предложениями, секунд
+        default: "0.7"
 
 permissions:
   contents: write
@@ -32,11 +38,13 @@ jobs:
         env:
           TEXT_FILE: ${{ inputs.text_file }}
           SPEAKER: ${{ inputs.speaker }}
-        run: python voice_silero.py "$TEXT_FILE" voice.mp3 "$SPEAKER"
+          RATE: ${{ inputs.rate }}
+          PAUSE: ${{ inputs.pause }}
+        run: python voice_silero.py "$TEXT_FILE" voice.mp3 "$SPEAKER" "$RATE" "$PAUSE"
       - uses: actions/upload-artifact@v4
         with:
           name: voice
-          path: voice.mp3
+          path: voice*.mp3
       - name: Save mp3 to voice-output branch
         run: |
           git config user.name "github-actions[bot]"
@@ -44,7 +52,7 @@ jobs:
           git fetch origin voice-output || true
           git checkout -B voice-output "$(git rev-parse --verify -q origin/voice-output || echo HEAD)"
           mkdir -p outputs
-          cp voice.mp3 "outputs/voice-${GITHUB_RUN_NUMBER}.mp3"
+          for f in voice*.mp3; do cp "$f" "outputs/run${GITHUB_RUN_NUMBER}-$f"; done
           git add outputs
           git commit -m "Voice output run ${GITHUB_RUN_NUMBER}"
           git push origin voice-output
