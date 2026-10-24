@@ -1,0 +1,39 @@
+name: Озвучка (Silero)
+
+# Запуск с телефона: GitHub → Actions → «Озвучка (Silero)» → Run workflow.
+# Текст берётся из файла репозитория, готовый mp3 — в Artifacts запуска.
+on:
+  workflow_dispatch:
+    inputs:
+      text_file:
+        description: Путь к .txt в репозитории
+        default: sample_text_ru.txt
+      speaker:
+        description: Голос (xenia, baya, aidar, eugene)
+        default: xenia
+
+permissions:
+  contents: read
+
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install torch numpy --index-url https://download.pytorch.org/whl/cpu
+      - name: Voice
+        env:
+          TEXT_FILE: ${{ inputs.text_file }}
+          SPEAKER: ${{ inputs.speaker }}
+        run: python voice_silero.py "$TEXT_FILE" voice.mp3 "$SPEAKER"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voice
+          path: voice.mp3
